@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlShorterServiceWebApi", "UrlShorterServiceWebApi\UrlShorterServiceWebApi.csproj", "{916BDF4E-38B1-4AD5-A8CE-D12724445FDE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{916BDF4E-38B1-4AD5-A8CE-D12724445FDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{916BDF4E-38B1-4AD5-A8CE-D12724445FDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{916BDF4E-38B1-4AD5-A8CE-D12724445FDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{916BDF4E-38B1-4AD5-A8CE-D12724445FDE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2FE75CEE-46A0-4D0C-9158-19E2EBB59BDB}
+	EndGlobalSection
+EndGlobal
