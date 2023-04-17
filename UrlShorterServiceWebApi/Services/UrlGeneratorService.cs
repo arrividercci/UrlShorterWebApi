@@ -1,17 +1,18 @@
 ﻿using System.Text;
+using UrlShorterServiceWebApi.Interfaces;
 
 namespace UrlShorterServiceWebApi.Services
 {
-    public class UrlGeneratorService
+    public class UrlGeneratorService : IUrlGeneratorService
     {
         public string GetUrlByCode(int code)
         {
-            var map = "0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
-            var size = map.Length;
+            var mapString = "0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
+            var size = mapString.Length;
             StringBuilder url = new StringBuilder();
             while(code >= 0)
             {
-                url.Append(map[code % size]);
+                url.Append(mapString[code % size]);
                 code /= size;
             }
             return url.ToString();
