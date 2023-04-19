@@ -63,26 +63,49 @@ namespace UrlShorterServiceWebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add([FromBody] Url url) 
+        public async Task<ActionResult> Add([FromBody] string originalUrl)
         {
             try
             {
+                if(string.IsNullOrEmpty(originalUrl)) return BadRequest();
                 var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
-                if (string.IsNullOrEmpty(url.ShortUrl))
-                {
-                    url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
-                }
+                var url = new Url();
+                url.OriginalUrl = originalUrl;
+                url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
                 return Ok($"{BaseUrl}api/url/{url.ShortUrl}");
-            } 
+            }
             catch (Exception)
             {
                 return BadRequest();
             }
         }
 
+        //identity=user
+        [HttpPost]
+        [Route("custom")]
+        public async Task<ActionResult> Add([FromBody] string originalUrl, [FromBody] string customUrl)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(originalUrl) || string.IsNullOrEmpty(customUrl)) return BadRequest();
+                var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
+                var url = new Url();
+                url.OriginalUrl = originalUrl;
+                url.ShortUrl = customUrl;
+                url.CreationDate = DateTime.Now;
+                await context.AddAsync(url);
+                await context.SaveChangesAsync();
+                return Ok($"{BaseUrl}api/url/{url.ShortUrl}");
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+        }
+        //identity = user && admin
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(int id, [FromBody] Url url)
         {
@@ -104,6 +127,8 @@ namespace UrlShorterServiceWebApi.Controllers
                 return BadRequest();
             }
         }
+
+        //identity = user && admin
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
