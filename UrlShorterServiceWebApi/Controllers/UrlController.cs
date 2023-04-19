@@ -16,12 +16,15 @@ namespace UrlShorterServiceWebApi.Controllers
         private readonly UrlShorterContext context;
         private readonly IUrlHashCodeService urlHashCodeService;
         private readonly IUrlGeneratorService urlGeneratorService;
+        private readonly IConfiguration configuration;
 
-        public UrlController(UrlShorterContext context, IUrlHashCodeService urlHashCodeService, IUrlGeneratorService urlGeneratorService)
+        public UrlController(UrlShorterContext context, IUrlHashCodeService urlHashCodeService, IUrlGeneratorService urlGeneratorService, IConfiguration configuration)
         {
             this.context = context;
             this.urlHashCodeService = urlHashCodeService;
             this.urlGeneratorService = urlGeneratorService;
+            this.configuration = configuration;
+            
         }
 
         [HttpGet]
@@ -64,6 +67,7 @@ namespace UrlShorterServiceWebApi.Controllers
         {
             try
             {
+                var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
                 if (string.IsNullOrEmpty(url.ShortUrl))
                 {
                     url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
@@ -71,7 +75,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
-                return Ok();
+                return Ok($"{BaseUrl}api/url/{url.ShortUrl}");
             } 
             catch (Exception)
             {
