@@ -45,6 +45,39 @@ namespace UrlShorterServiceWebApi.Migrations
 
                     b.ToTable("Urls");
                 });
+
+            modelBuilder.Entity("UrlShorterServiceWebApi.Entities.UserUrls", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("UrlId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UrlId");
+
+                    b.ToTable("UserUrls");
+                });
+
+            modelBuilder.Entity("UrlShorterServiceWebApi.Entities.UserUrls", b =>
+                {
+                    b.HasOne("UrlShorterServiceWebApi.Entities.Url", "Url")
+                        .WithMany()
+                        .HasForeignKey("UrlId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Url");
+                });
 #pragma warning restore 612, 618
         }
     }
