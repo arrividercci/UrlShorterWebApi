@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UrlShorterServiceWebApi.Data;
 using UrlShorterServiceWebApi.Entities;
 using UrlShorterServiceWebApi.Interfaces;
-using UrlShorterServiceWebApi.Services;
+using UrlShorterServiceWebApi.Models;
 
 
 namespace UrlShorterServiceWebApi.Controllers
@@ -86,15 +85,15 @@ namespace UrlShorterServiceWebApi.Controllers
         //identity=user
         [HttpPost]
         [Route("custom")]
-        public async Task<ActionResult> Add([FromBody] string originalUrl, [FromBody] string customUrl)
+        public async Task<ActionResult> Add([FromBody] UrlModel urlModel)
         {
             try
             {
-                if (string.IsNullOrEmpty(originalUrl) || string.IsNullOrEmpty(customUrl)) return BadRequest();
+                if (string.IsNullOrEmpty(urlModel.OriginalUrl) || string.IsNullOrEmpty(urlModel.CustomUrl)) return BadRequest();
                 var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
                 var url = new Url();
-                url.OriginalUrl = originalUrl;
-                url.ShortUrl = customUrl;
+                url.OriginalUrl = urlModel.OriginalUrl;
+                url.ShortUrl = urlModel.CustomUrl;
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
