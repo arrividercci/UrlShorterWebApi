@@ -7,8 +7,8 @@ namespace UrlShorterServiceWebApi
     {
         public static async Task Initialize(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
-            string adminEmail = "";
-            string adminPassword = "";
+            string adminEmail = "admin@gmail.com";
+            string adminPassword = "Qwerty_1";
             if (await roleManager.FindByNameAsync(RolesString.Admin) == null)
             {
                 await roleManager.CreateAsync(new IdentityRole(RolesString.Admin));
