@@ -5,15 +5,14 @@ namespace UrlShorterServiceWebApi.Services
 {
     public class UrlGeneratorService : IUrlGeneratorService
     {
-        public string GetUrlByCode(int code)
+        public string GetUrlByCode(string mapString)
         {
-            var mapString = "0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
             var size = mapString.Length;
-            StringBuilder url = new StringBuilder();
-            while(code >= 0)
+            var random = new Random();
+            var url = new StringBuilder();
+            for(int i = 0; i < 8; i++)
             {
-                url.Append(mapString[code % size]);
-                code /= size;
+                url.Append(mapString[random.Next(size)]);
             }
             return url.ToString();
         }

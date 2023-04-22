@@ -2,6 +2,6 @@
 {
     public interface IUrlGeneratorService
     {
-        public string GetUrlByCode(int code);
+        public string GetUrlByCode(string mapString);
     }
 }

@@ -2,6 +2,6 @@
 {
     public interface IUrlHashCodeService
     {
-        public int GetUrlHashCode(string url);
+        public string GetUrlHashCode(string url);
     }
 }
