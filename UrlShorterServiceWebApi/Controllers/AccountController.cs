@@ -4,7 +4,7 @@ using UrlShorterServiceWebApi.Models;
 
 namespace UrlShorterServiceWebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/account")]
     [ApiController]
     public class AccountController : ControllerBase
     {
