@@ -33,7 +33,7 @@ namespace UrlShorterServiceWebApi.Controllers
             return Ok(urls);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("get/{id}")]
         public async Task<ActionResult<IEnumerable<Url>>> Get(int id)
         {
             var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
