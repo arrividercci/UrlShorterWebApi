@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  urlshorterservicewebapi:
+    image: ${DOCKER_REGISTRY-}urlshorterservicewebapi
+    build:
+      context: .
+      dockerfile: UrlShorterServiceWebApi/Dockerfile

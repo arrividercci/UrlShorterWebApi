@@ -37,6 +37,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
     };
 });
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddTransient<IAccountService, AccountService>();

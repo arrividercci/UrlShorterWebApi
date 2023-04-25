@@ -7,6 +7,6 @@ namespace UrlShorterServiceWebApi.Models
         [Required]
         public string OriginalUrl { get; set; }
         [Required]
-        public string CustomUrl { get; set; }
+        public string ShortUrl { get; set; }
     }
 }

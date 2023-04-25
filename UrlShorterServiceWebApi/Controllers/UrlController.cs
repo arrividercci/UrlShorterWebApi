@@ -27,10 +27,20 @@ namespace UrlShorterServiceWebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Url>>> Get()
+        public async Task<ActionResult<IEnumerable<UrlModel>>> Get()
         {
             var urls = await context.Urls.ToListAsync();
-            return Ok(urls);
+            var urlsDto = new List<UrlModel>();
+            foreach(var url in urls)
+            {
+                var urlDto = new UrlModel()
+                {
+                    OriginalUrl = url.OriginalUrl,
+                    ShortUrl = url.ShortUrl
+                };
+                urlsDto.Add(urlDto);
+            }
+            return Ok(urlsDto);
         }
 
         [HttpGet("get/{id}")]
@@ -62,10 +72,11 @@ namespace UrlShorterServiceWebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add([FromBody] string originalUrl)
+        public async Task<ActionResult<UrlDto>> Add([FromBody] UrlDto urlDto)
         {
             try
             {
+                var originalUrl = urlDto.Url;
                 if(string.IsNullOrEmpty(originalUrl)) return BadRequest();
                 var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
                 var url = new Url();
@@ -74,7 +85,8 @@ namespace UrlShorterServiceWebApi.Controllers
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
-                return Ok($"{BaseUrl}api/url/{url.ShortUrl}");
+                urlDto.Url = $"{BaseUrl}api/url/{url.ShortUrl}";
+                return Ok(urlDto);
             }
             catch (Exception)
             {
@@ -85,19 +97,23 @@ namespace UrlShorterServiceWebApi.Controllers
         //identity=user
         [HttpPost]
         [Route("custom")]
-        public async Task<ActionResult> Add([FromBody] UrlModel urlModel)
+        public async Task<ActionResult<UrlDto>> Add([FromBody] UrlModel urlModel)
         {
             try
             {
-                if (string.IsNullOrEmpty(urlModel.OriginalUrl) || string.IsNullOrEmpty(urlModel.CustomUrl)) return BadRequest();
+                if (string.IsNullOrEmpty(urlModel.OriginalUrl) || string.IsNullOrEmpty(urlModel.ShortUrl)) return BadRequest();
                 var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
                 var url = new Url();
                 url.OriginalUrl = urlModel.OriginalUrl;
-                url.ShortUrl = urlModel.CustomUrl;
+                url.ShortUrl = urlModel.ShortUrl;
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
-                return Ok($"{BaseUrl}api/url/{url.ShortUrl}");
+                var urlDto = new UrlDto()
+                {
+                    Url = $"{BaseUrl}api/url/{url.ShortUrl}"
+                };
+                return Ok(urlDto);
             }
             catch (Exception)
             {
@@ -106,16 +122,20 @@ namespace UrlShorterServiceWebApi.Controllers
         }
         //identity = user && admin
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(int id, [FromBody] Url url)
+        public async Task<ActionResult> Update(int id, [FromBody] UrlModel urlModel)
         {
             try
             {
-                if (url == null)
+                if (urlModel == null)
                 {
-                    return NotFound();
+                    return BadRequest();
                 }
                 else
                 {
+                    var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
+                    if (url == null) return NotFound();
+                    url.ShortUrl = urlModel.ShortUrl;
+                    url.OriginalUrl = urlModel.OriginalUrl;
                     context.Urls.Update(url);
                     await context.SaveChangesAsync();
                     return NoContent();
