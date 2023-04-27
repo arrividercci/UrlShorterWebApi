@@ -32,12 +32,16 @@ namespace UrlShorterServiceWebApi.Controllers
 
         [HttpPost]
         [Route("login")]
-        public async Task<ActionResult> Login([FromBody] LoginUserModel user)
+        public async Task<ActionResult<UserDto>> Login([FromBody] LoginUserModel user)
         {
             try
             {
                 var token = await accountService.Login(user);
-                return Ok(token);
+                var userDto = new UserDto()
+                {
+                    Token= token,
+                };
+                return Ok(userDto);
             }
             catch (Exception)
             {
