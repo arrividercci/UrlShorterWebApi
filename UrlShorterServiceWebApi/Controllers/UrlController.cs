@@ -7,6 +7,7 @@ using UrlShorterServiceWebApi.Interfaces;
 using UrlShorterServiceWebApi.Models;
 using UrlShorterServiceWebApi;
 using System.Linq;
+using System.Security.Claims;
 
 namespace UrlShorterServiceWebApi.Controllers
 {
@@ -25,7 +26,6 @@ namespace UrlShorterServiceWebApi.Controllers
             this.urlHashCodeService = urlHashCodeService;
             this.urlGeneratorService = urlGeneratorService;
             this.configuration = configuration;
-            
         }
 
         [HttpGet]
@@ -50,10 +50,19 @@ namespace UrlShorterServiceWebApi.Controllers
         [Authorize(Roles = RolesString.User)]
         public async Task<ActionResult<IEnumerable<UrlModel>>> GetMyUrls()
         {
-            var userId = User.Identity.Name;
-            var urlsIds = await context.UserUrls.Where(userUrl => userUrl.Equals(userId)).Select(userUrl => userUrl.UrlId).ToListAsync();
-            var urls = await context.Urls.Where(url => urlsIds.Contains(url.Id)).ToListAsync();
+            var userId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (userId == null) return BadRequest();
+            var urlsIds = await context.UserUrls
+                .Where(userUrl => userUrl.Equals(userId))
+                .Select(userUrl => userUrl.UrlId)
+                .ToListAsync();
+            
+            var urls = await context.Urls
+                .Where(url => urlsIds.Contains(url.Id))
+                .ToListAsync();
+            
             var urlsDto = new List<UrlModel>();
+            
             foreach (var url in urls)
             {
                 var urlDto = new UrlModel()
@@ -133,9 +142,11 @@ namespace UrlShorterServiceWebApi.Controllers
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
+                var userId = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (userId == null) return BadRequest();
                 var userUrl = new UserUrls()
                 {
-                    UserId = User.Identity.Name,
+                    UserId = userId,
                     UrlId = url.Id
                 };
                 await context.AddAsync(userUrl);
