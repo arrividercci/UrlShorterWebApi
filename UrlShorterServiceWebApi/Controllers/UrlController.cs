@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UrlShorterServiceWebApi.Data;
 using UrlShorterServiceWebApi.Entities;
 using UrlShorterServiceWebApi.Interfaces;
 using UrlShorterServiceWebApi.Models;
-
+using UrlShorterServiceWebApi;
+using System.Linq;
 
 namespace UrlShorterServiceWebApi.Controllers
 {
@@ -27,6 +29,7 @@ namespace UrlShorterServiceWebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RolesString.Admin)]
         public async Task<ActionResult<IEnumerable<UrlModel>>> Get()
         {
             var urls = await context.Urls.ToListAsync();
@@ -43,7 +46,28 @@ namespace UrlShorterServiceWebApi.Controllers
             return Ok(urlsDto);
         }
 
+        [HttpGet("my")]
+        [Authorize(Roles = RolesString.User)]
+        public async Task<ActionResult<IEnumerable<UrlModel>>> GetMyUrls()
+        {
+            var userId = User.Identity.Name;
+            var urlsIds = await context.UserUrls.Where(userUrl => userUrl.Equals(userId)).Select(userUrl => userUrl.UrlId).ToListAsync();
+            var urls = await context.Urls.Where(url => urlsIds.Contains(url.Id)).ToListAsync();
+            var urlsDto = new List<UrlModel>();
+            foreach (var url in urls)
+            {
+                var urlDto = new UrlModel()
+                {
+                    OriginalUrl = url.OriginalUrl,
+                    ShortUrl = url.ShortUrl
+                };
+                urlsDto.Add(urlDto);
+            }
+            return Ok(urlsDto);
+        }
+
         [HttpGet("get/{id}")]
+        [Authorize(Roles = RolesString.Admin)]
         public async Task<ActionResult<IEnumerable<Url>>> Get(int id)
         {
             var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
@@ -94,9 +118,9 @@ namespace UrlShorterServiceWebApi.Controllers
             }
         }
 
-        //identity=user
         [HttpPost]
         [Route("custom")]
+        [Authorize(Roles = RolesString.User)]
         public async Task<ActionResult<UrlDto>> Add([FromBody] UrlModel urlModel)
         {
             try
@@ -109,6 +133,13 @@ namespace UrlShorterServiceWebApi.Controllers
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
+                var userUrl = new UserUrls()
+                {
+                    UserId = User.Identity.Name,
+                    UrlId = url.Id
+                };
+                await context.AddAsync(userUrl);
+                await context.SaveChangesAsync();
                 var urlDto = new UrlDto()
                 {
                     Url = $"{BaseUrl}api/url/{url.ShortUrl}"
@@ -120,8 +151,9 @@ namespace UrlShorterServiceWebApi.Controllers
                 return BadRequest();
             }
         }
-        //identity = user && admin
+
         [HttpPut("{id}")]
+        [Authorize(Roles = RolesString.Admin + ", " + RolesString.User)]
         public async Task<ActionResult> Update(int id, [FromBody] UrlModel urlModel)
         {
             try
@@ -147,8 +179,8 @@ namespace UrlShorterServiceWebApi.Controllers
             }
         }
 
-        //identity = user && admin
         [HttpDelete("{id}")]
+        [Authorize(Roles = RolesString.User + ", " + RolesString.Admin)]
         public async Task<ActionResult> Delete(int id)
         {
             try
