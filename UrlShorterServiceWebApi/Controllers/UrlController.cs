@@ -5,8 +5,6 @@ using UrlShorterServiceWebApi.Data;
 using UrlShorterServiceWebApi.Entities;
 using UrlShorterServiceWebApi.Interfaces;
 using UrlShorterServiceWebApi.Models;
-using UrlShorterServiceWebApi;
-using System.Linq;
 using System.Security.Claims;
 
 namespace UrlShorterServiceWebApi.Controllers
@@ -75,7 +73,7 @@ namespace UrlShorterServiceWebApi.Controllers
             return Ok(urlsDto);
         }
 
-        [HttpGet("get/{id}")]
+        [HttpGet("{id}")]
         [Authorize(Roles = RolesString.Admin)]
         public async Task<ActionResult<IEnumerable<Url>>> Get(int id)
         {
@@ -87,20 +85,6 @@ namespace UrlShorterServiceWebApi.Controllers
             else
             {
                 return Ok(url);
-            }
-        }
-
-        [HttpGet("{shortUrl}")]
-        public async Task<ActionResult> GetByShortUrl(string shortUrl)
-        {
-            var url = await context.Urls.FirstOrDefaultAsync(url => url.ShortUrl.Equals(shortUrl));
-            if (url == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                return Redirect(url.OriginalUrl);
             }
         }
 
@@ -118,7 +102,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
-                urlDto.Url = $"{BaseUrl}api/url/{url.ShortUrl}";
+                urlDto.Url = $"{BaseUrl}ushorter/{url.ShortUrl}";
                 return Ok(urlDto);
             }
             catch (Exception)
@@ -153,7 +137,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 await context.SaveChangesAsync();
                 var urlDto = new UrlDto()
                 {
-                    Url = $"{BaseUrl}api/url/{url.ShortUrl}"
+                    Url = $"{BaseUrl}ushorter/{url.ShortUrl}"
                 };
                 return Ok(urlDto);
             }
