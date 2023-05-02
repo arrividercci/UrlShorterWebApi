@@ -13,10 +13,11 @@ using UrlShorterServiceWebApi.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddAuthentication(options =>
@@ -41,7 +42,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 builder.Services.AddTransient<IAccountService, AccountService>();
+
 builder.Services.AddTransient<IUrlGeneratorService, UrlGeneratorService>();
+
 builder.Services.AddTransient<IUrlHashCodeService, UrlHashCodeService>();
 
 builder.Services.AddDbContext<UrlShorterContext>(option => 
@@ -76,6 +79,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseDefaultFiles();
+
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
