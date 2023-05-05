@@ -6,3 +6,31 @@ services:
     build:
       context: .
       dockerfile: UrlShorterServiceWebApi/Dockerfile
+    depends_on:
+    - sqlserverService
+    networks:
+    - weathernet
+    environment:
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=https://+:443;http://+:80
+        ConnectionStrings__UrlShorterDbConnection=Server=sqlserverService;Initial Catalog=UrlShorterDb;User ID=sa;Password=BigPassw0rd1;TrustServerCertificate=True;
+        ConnectionStrings__UrlShorterIdentityConnection=Server=sqlserverService;Initial Catalog=UrlShorterIdentityDb;User ID=sa;Password=BigPassw0rd1;TrustServerCertificate=True;MultipleActiveResultSets=true;
+    ports:
+    - "80"
+    - "443"
+  sqlserverService:
+    image: mcr.microsoft.com/mssql/server:latest
+    hostname: sqlserverService
+    container_name: sqlserverService
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: BigPassw0rd1
+    volumes:
+    - .data/mssql/:/var/opt/mssql3
+    ports:
+    - 1433:1433
+    networks:
+    - weathernet
+networks:
+  weathernet:
+   driver: bridge

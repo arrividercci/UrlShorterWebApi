@@ -68,6 +68,8 @@ namespace UrlShorterServiceWebApi.Services
                 new Claim(ClaimTypes.Name, user.Email)
             };
 
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
+
             var roles = await userManager.GetRolesAsync(user);
 
             foreach (var role in roles)

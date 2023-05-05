@@ -126,7 +126,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
-                var userId = User.FindFirst(ClaimTypes.Name)?.Value;
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (userId == null) return BadRequest();
                 var userUrl = new UserUrls()
                 {
