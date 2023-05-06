@@ -7,6 +7,7 @@ namespace UrlShorterServiceWebApi.Entities
     {
         public int Id { get; set; }
         [Required]
+        [Url]
         public string OriginalUrl { get; set; }
         [Required]
         public string ShortUrl { get; set; }

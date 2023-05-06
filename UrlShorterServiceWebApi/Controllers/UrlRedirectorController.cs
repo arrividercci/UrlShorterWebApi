@@ -18,14 +18,21 @@ namespace UrlShorterServiceWebApi.Controllers
         [HttpGet("{shortUrl}")]
         public async Task<ActionResult> GetByShortUrl(string shortUrl)
         {
-            var url = await context.Urls.FirstOrDefaultAsync(url => url.ShortUrl.Equals(shortUrl));
-            if (url == null)
+            if (ModelState.IsValid)
             {
-                return NotFound();
+                var url = await context.Urls.FirstOrDefaultAsync(url => url.ShortUrl.Equals(shortUrl));
+                if (url == null)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    return Redirect(url.OriginalUrl);
+                }
             }
             else
             {
-                return Redirect(url.OriginalUrl);
+                return BadRequest();
             }
         }
     }
