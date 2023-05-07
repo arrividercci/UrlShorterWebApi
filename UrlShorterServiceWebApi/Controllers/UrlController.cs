@@ -30,110 +30,88 @@ namespace UrlShorterServiceWebApi.Controllers
         [Authorize(Roles = RolesString.Admin)]
         public async Task<ActionResult<IEnumerable<UrlModel>>> Get()
         {
-            if (ModelState.IsValid)
+            
+            var urls = await context.Urls.ToListAsync();
+            var urlsDto = new List<UrlModel>();
+            foreach (var url in urls)
             {
-                var urls = await context.Urls.ToListAsync();
-                var urlsDto = new List<UrlModel>();
-                foreach (var url in urls)
+                var urlDto = new UrlModel()
                 {
-                    var urlDto = new UrlModel()
-                    {
-                        OriginalUrl = url.OriginalUrl,
-                        ShortUrl = url.ShortUrl
-                    };
-                    urlsDto.Add(urlDto);
-                }
-                return Ok(urlsDto);
+                    OriginalUrl = url.OriginalUrl,
+                    ShortUrl = url.ShortUrl
+                };
+                urlsDto.Add(urlDto);
             }
-            else
-            {
-                return BadRequest();
-            }
+            return Ok(urlsDto);
+             
         }
 
         [HttpGet("my")]
         [Authorize(Roles = RolesString.User)]
         public async Task<ActionResult<IEnumerable<UrlModel>>> GetMyUrls()
         {
-            if (ModelState.IsValid)
+            
+            var userId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (userId == null) return BadRequest();
+            var urlsIds = await context.UserUrls
+                .Where(userUrl => userUrl.Equals(userId))
+                .Select(userUrl => userUrl.UrlId)
+                .ToListAsync();
+
+            var urls = await context.Urls
+                .Where(url => urlsIds.Contains(url.Id))
+                .ToListAsync();
+
+            var urlsDto = new List<UrlModel>();
+
+            foreach (var url in urls)
             {
-                var userId = User.FindFirst(ClaimTypes.Name)?.Value;
-                if (userId == null) return BadRequest();
-                var urlsIds = await context.UserUrls
-                    .Where(userUrl => userUrl.Equals(userId))
-                    .Select(userUrl => userUrl.UrlId)
-                    .ToListAsync();
-
-                var urls = await context.Urls
-                    .Where(url => urlsIds.Contains(url.Id))
-                    .ToListAsync();
-
-                var urlsDto = new List<UrlModel>();
-
-                foreach (var url in urls)
+                var urlDto = new UrlModel()
                 {
-                    var urlDto = new UrlModel()
-                    {
-                        OriginalUrl = url.OriginalUrl,
-                        ShortUrl = url.ShortUrl
-                    };
-                    urlsDto.Add(urlDto);
-                }
-                return Ok(urlsDto);
+                    OriginalUrl = url.OriginalUrl,
+                    ShortUrl = url.ShortUrl
+                };
+                urlsDto.Add(urlDto);
             }
-            else
-            {
-                return BadRequest();
-            }
+            return Ok(urlsDto);
+             
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = RolesString.Admin)]
         public async Task<ActionResult<IEnumerable<Url>>> Get(int id)
         {
-            if (ModelState.IsValid)
+             
+            var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
+            if (url == null)
             {
-                var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
-                if (url == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    return Ok(url);
-                }
+                return NotFound();
             }
             else
             {
-                return BadRequest();
+                return Ok(url);
             }
+             
         }
 
         [HttpPost]
         public async Task<ActionResult<UrlDto>> Add([FromBody] UrlDto urlDto)
         {
-            if (ModelState.IsValid)
+            try
             {
-                try
-                {
-                    var originalUrl = urlDto.Url;
-                    if (string.IsNullOrEmpty(originalUrl)) return BadRequest();
-                    var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
-                    var url = new Url();
-                    url.OriginalUrl = originalUrl;
-                    url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
-                    url.CreationDate = DateTime.Now;
-                    await context.AddAsync(url);
-                    await context.SaveChangesAsync();
-                    urlDto.Url = $"{BaseUrl}ushorter/{url.ShortUrl}";
-                    return Ok(urlDto);
-                }
-                catch (Exception)
-                {
-                    return BadRequest();
-                }
+                var originalUrl = urlDto.Url;
+                if (string.IsNullOrEmpty(originalUrl)) return BadRequest();
+                var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
+                var url = new Url();
+                url.OriginalUrl = originalUrl;
+                url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
+                url.CreationDate = DateTime.Now;
+                await context.AddAsync(url);
+                await context.SaveChangesAsync();
+                urlDto.Url = $"{BaseUrl}ushorter/{url.ShortUrl}";
+                return Ok(urlDto);
             }
-            else
+            catch (Exception)
             {
                 return BadRequest();
             }
@@ -144,39 +122,33 @@ namespace UrlShorterServiceWebApi.Controllers
         [Authorize(Roles = RolesString.User)]
         public async Task<ActionResult<UrlDto>> Add([FromBody] UrlModel urlModel)
         {
-            if (ModelState.IsValid)
+            
+            try
             {
-                try
+                if (string.IsNullOrEmpty(urlModel.OriginalUrl) || string.IsNullOrEmpty(urlModel.ShortUrl)) return BadRequest();
+                var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
+                var url = new Url();
+                url.OriginalUrl = urlModel.OriginalUrl;
+                url.ShortUrl = urlModel.ShortUrl;
+                url.CreationDate = DateTime.Now;
+                await context.AddAsync(url);
+                await context.SaveChangesAsync();
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null) return BadRequest();
+                var userUrl = new UserUrls()
                 {
-                    if (string.IsNullOrEmpty(urlModel.OriginalUrl) || string.IsNullOrEmpty(urlModel.ShortUrl)) return BadRequest();
-                    var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
-                    var url = new Url();
-                    url.OriginalUrl = urlModel.OriginalUrl;
-                    url.ShortUrl = urlModel.ShortUrl;
-                    url.CreationDate = DateTime.Now;
-                    await context.AddAsync(url);
-                    await context.SaveChangesAsync();
-                    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    if (userId == null) return BadRequest();
-                    var userUrl = new UserUrls()
-                    {
-                        UserId = userId,
-                        UrlId = url.Id
-                    };
-                    await context.AddAsync(userUrl);
-                    await context.SaveChangesAsync();
-                    var urlDto = new UrlDto()
-                    {
-                        Url = $"{BaseUrl}ushorter/{url.ShortUrl}"
-                    };
-                    return Ok(urlDto);
-                }
-                catch (Exception)
+                    UserId = userId,
+                    UrlId = url.Id
+                };
+                await context.AddAsync(userUrl);
+                await context.SaveChangesAsync();
+                var urlDto = new UrlDto()
                 {
-                    return BadRequest();
-                }
+                    Url = $"{BaseUrl}ushorter/{url.ShortUrl}"
+                };
+                return Ok(urlDto);
             }
-            else
+            catch (Exception)
             {
                 return BadRequest();
             }
@@ -186,31 +158,24 @@ namespace UrlShorterServiceWebApi.Controllers
         [Authorize(Roles = RolesString.Admin + ", " + RolesString.User)]
         public async Task<ActionResult> Update(int id, [FromBody] UrlModel urlModel)
         {
-            if (ModelState.IsValid)
+            try
             {
-                try
-                {
-                    if (urlModel == null)
-                    {
-                        return BadRequest();
-                    }
-                    else
-                    {
-                        var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
-                        if (url == null) return NotFound();
-                        url.ShortUrl = urlModel.ShortUrl;
-                        url.OriginalUrl = urlModel.OriginalUrl;
-                        context.Urls.Update(url);
-                        await context.SaveChangesAsync();
-                        return NoContent();
-                    }
-                }
-                catch (Exception)
+                if (urlModel == null)
                 {
                     return BadRequest();
                 }
+                else
+                {
+                    var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
+                    if (url == null) return NotFound();
+                    url.ShortUrl = urlModel.ShortUrl;
+                    url.OriginalUrl = urlModel.OriginalUrl;
+                    context.Urls.Update(url);
+                    await context.SaveChangesAsync();
+                    return NoContent();
+                }
             }
-            else
+            catch (Exception)
             {
                 return BadRequest();
             }
@@ -219,29 +184,22 @@ namespace UrlShorterServiceWebApi.Controllers
         [HttpDelete("{id}")]
         [Authorize(Roles = RolesString.User + ", " + RolesString.Admin)]
         public async Task<ActionResult> Delete(int id)
-        {
-            if (ModelState.IsValid)
+        { 
+            try
             {
-                try
+                var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
+                if (url == null)
                 {
-                    var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
-                    if (url == null)
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        context.Remove(url);
-                        await context.SaveChangesAsync();
-                        return NoContent();
-                    }
+                    return NotFound();
                 }
-                catch (Exception)
+                else
                 {
-                    return BadRequest();
+                    context.Remove(url);
+                    await context.SaveChangesAsync();
+                    return NoContent();
                 }
             }
-            else
+            catch (Exception)
             {
                 return BadRequest();
             }
