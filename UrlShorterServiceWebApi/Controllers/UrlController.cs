@@ -26,8 +26,8 @@ namespace UrlShorterServiceWebApi.Controllers
             this.configuration = configuration;
         }
 
-        [HttpGet]
         [Authorize(Roles = RolesString.Admin)]
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<UrlModel>>> Get()
         {
             
@@ -117,8 +117,7 @@ namespace UrlShorterServiceWebApi.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("custom")]
+        [HttpPost("custom")]
         [Authorize(Roles = RolesString.User)]
         public async Task<ActionResult<UrlDto>> Add([FromBody] UrlModel urlModel)
         {
@@ -142,10 +141,8 @@ namespace UrlShorterServiceWebApi.Controllers
                 };
                 await context.AddAsync(userUrl);
                 await context.SaveChangesAsync();
-                var urlDto = new UrlDto()
-                {
-                    Url = $"{BaseUrl}ushorter/{url.ShortUrl}"
-                };
+                var urlDto = new UrlDto();
+                urlDto.Url = $"{BaseUrl}ushorter/{url.ShortUrl}";
                 return Ok(urlDto);
             }
             catch (Exception)
@@ -155,7 +152,7 @@ namespace UrlShorterServiceWebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = RolesString.Admin + ", " + RolesString.User)]
+        [Authorize(Roles = RolesString.User + "," + RolesString.Admin)]
         public async Task<ActionResult> Update(int id, [FromBody] UrlModel urlModel)
         {
             try
@@ -182,7 +179,7 @@ namespace UrlShorterServiceWebApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = RolesString.User + ", " + RolesString.Admin)]
+        [Authorize(Roles = RolesString.User + "," + RolesString.Admin)]
         public async Task<ActionResult> Delete(int id)
         { 
             try

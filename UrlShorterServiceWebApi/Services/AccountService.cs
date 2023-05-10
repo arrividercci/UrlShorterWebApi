@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -61,30 +62,31 @@ namespace UrlShorterServiceWebApi.Services
 
         private async Task<string> CreateJwtToken(User user)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetSection("Jwt").GetSection("Key").Value));
-            var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+            var myissuer = configuration["JwtSettings:Issuer"];
+            var myaudience = configuration["JwtSettings:Audience"];
+            var secretKey = configuration["JwtSettings:Key"];
+
+            var userRoles = await userManager.GetRolesAsync(user);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
+
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Email)
+                new Claim(ClaimTypes.Name, user.Email!),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
             };
+            claims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
-
-            var roles = await userManager.GetRolesAsync(user);
-
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            var token = new JwtSecurityToken(
-                issuer: configuration.GetSection("Jwt").GetSection("Issuer").Value,
+            var jwtToken = new JwtSecurityToken(
+                issuer: myissuer,
+                audience: myaudience,
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(int.Parse(configuration.GetSection("Jwt").GetSection("Lifetime").Value)),
-                signingCredentials: signingCredentials
-                );
+                expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(30)),
+                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature)
+            );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+
+            return jwtTokenHandler.WriteToken(jwtToken);
         }
     }
 }

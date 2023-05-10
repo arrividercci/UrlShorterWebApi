@@ -10,86 +10,70 @@ using UrlShorterServiceWebApi.Entities;
 using UrlShorterServiceWebApi.Interfaces;
 using UrlShorterServiceWebApi.Services;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddControllers();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddAuthentication(options =>
+internal class Program
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(option =>
-{
-    option.TokenValidationParameters = new TokenValidationParameters
+    private static void Main(string[] args)
     {
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-    };
-});
+        var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthorization();
+        var config = builder.Configuration;
 
-builder.Services.AddTransient<IAccountService, AccountService>();
+        builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<UserIdentityContext>().AddDefaultTokenProviders();
 
-builder.Services.AddTransient<IUrlGeneratorService, UrlGeneratorService>();
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidIssuer = config["JwtSettings:Issuer"],
+                ValidAudience = config["JwtSettings:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JwtSettings:Key"]!)),
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true
+            };
+        });
 
-builder.Services.AddTransient<IUrlHashCodeService, UrlHashCodeService>();
+        // Add services to the container.
+        builder.Services.AddControllers();
 
-builder.Services.AddDbContext<UrlShorterContext>(option => 
-option.UseSqlServer(builder.Configuration.GetConnectionString("UrlShorterDbConnection")));
+        builder.Services.AddTransient<IAccountService, AccountService>();
+        builder.Services.AddTransient<IUrlGeneratorService, UrlGeneratorService>();
+        builder.Services.AddTransient<IUrlHashCodeService, UrlHashCodeService>();
+        
+        builder.Services.AddDbContext<UrlShorterContext>(option =>
+        option.UseSqlServer(builder.Configuration.GetConnectionString("UrlShorterDbConnection")));
+        builder.Services.AddDbContext<UserIdentityContext>(option =>
+        option.UseSqlServer(builder.Configuration.GetConnectionString("UrlShorterIdentityConnection")));
 
-builder.Services.AddDbContext<UserIdentityContext>(option => 
-option.UseSqlServer(builder.Configuration.GetConnectionString("UrlShorterIdentityConnection")));
 
-builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<UserIdentityContext>();
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
 
-var app = builder.Build();
+        builder.Services.AddSwaggerGen();
+        var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var userManager = services.GetRequiredService<UserManager<User>>();
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        await RoleInitializer.Initialize(userManager, roleManager);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error while seeding the database." + DateTime.Now.ToString());
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseDefaultFiles();
+        app.UseStaticFiles();
+
+        app.UseHttpsRedirection();
+
+        app.UseAuthorization();
+        app.MapControllers();
+
+        app.Run();
     }
 }
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseDefaultFiles();
-
-app.UseStaticFiles();
-
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
