@@ -29,16 +29,24 @@
                 <div class="main-container">
                     <div id="url-model">
                         <form action="javascript:void(0)" method="POST" onsubmit="createUrl()">
-                            <input style="width: 500px; border-width: 0.5px; border-radius: 5px;" id="original-url" placeholder="Your url">
-                            <input type="hidden" id="custom-url" placeholder="Your custom url">
+                            <input style="width: 500px; border-width: 0.5px; border-radius: 5px;" id="original-url" value="" placeholder="Your url">
+                            <input style="display:none; border-width: 0.5px; border-radius: 5px; margin-left:5px;" id="custom-url" value="" placeholder="Your custom url">
                             <input style="padding: 10px; border-radius: 5px; background-color: white; border-width: 0.5px; width: 70px; margin-left: 5px;" type="submit" value="Create" />
                         </form>
                     </div>
                     <div style="display:none" class="log" id="login-model">
                         <form action="javascript:void(0)" method="POST" onsubmit="login()">
-                            <input type="email" style="width: 200px; height:20px; border-width: 0.5px; border-radius: 5px;" id="login-email" placeholder="Email">
-                            <input type="password" style="width: 200px; height: 20px; margin: 5px; border-width: 0.5px; border-radius: 5px;" id="login-password" placeholder="Password">
-                            <input style="border-radius: 5px; width: 200px; height: 20px; background-color: white; border-width: 0.5px; margin: 5px;" type="submit" value="Login" />
+                            <input type="email" id="login-email" placeholder="Email">
+                            <input type="password" id="login-password" placeholder="Password">
+                            <input type="submit" value="Login" />
+                        </form>
+                    </div>
+                    <div style="display:none" class="log" id="register-model">
+                        <form action="javascript:void(0)" method="POST" onsubmit="register()">
+                            <input type="email" id="register-email" placeholder="Email">
+                            <input type="password" id="register-password" placeholder="Password">
+                            <input type="password" id="register-confirm-password" placeholder="Confirm password">
+                            <input type="submit" value="Register" />
                         </form>
                     </div>
                 </div>
