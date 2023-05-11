@@ -24,7 +24,7 @@ namespace UrlShorterServiceWebApi.Services
             if(await ValidateUser(loginUserModel))
             {
                 var user = await userManager.FindByNameAsync(loginUserModel.Email);
-                return await CreateJwtToken(user);
+                return await CreateJwtToken(user!);
             }
             else
             {

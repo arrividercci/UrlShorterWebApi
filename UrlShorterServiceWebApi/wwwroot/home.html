@@ -11,14 +11,14 @@
             <div class="header-container">
                 <nav>
                     <div class="logo">
-                        <h1>USHORTER</h1>
+                        <h1 onclick="ushorter()">USHORTER</h1>
                     </div>
                 </nav>
                 <nav>
                     <ul>
                         <li id="login-button"><button type="button" class="btn btn-dark">LOGIN</button></li>
                         <li id="register-button"><button type="button" class="btn btn-dark">REGISTER</button></li>
-                        <li id="user-button" style="display:none;"><button type="button" class="btn btn-dark">USER</button></li>
+                        <li id="user-button" style="display:none;"><button type="button" class="btn btn-dark">HOME</button></li>
                         <li id="logout-button" style="display:none;"><button type="button" class="btn btn-dark">LOGOUT</button></li>
                     </ul>
                 </nav>
@@ -48,6 +48,32 @@
                             <input type="password" id="register-confirm-password" placeholder="Confirm password">
                             <input type="submit" value="Register" />
                         </form>
+                    </div>
+                    <div style="display:none;" id="url-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Original Url</th>
+                                    <th>Custom Url</th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-wrapper">
+                        <div class="urlForm">
+                            <div class="group">
+                                <label for="url">New custom code</label>
+                                <input type="text" class="form-control" id="url"/>
+                            </div>
+                            <div class="action">
+                                <button class="btn btn-dark save">Save changes</button>
+                                <button class="btn btn-dark cancel">Cancel</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -17,6 +17,7 @@ namespace UrlShorterServiceWebApi.Controllers
         private readonly IUrlHashCodeService urlHashCodeService;
         private readonly IUrlGeneratorService urlGeneratorService;
         private readonly IConfiguration configuration;
+        private readonly string BaseUrl;
 
         public UrlController(UrlShorterContext context, IUrlHashCodeService urlHashCodeService, IUrlGeneratorService urlGeneratorService, IConfiguration configuration)
         {
@@ -24,37 +25,40 @@ namespace UrlShorterServiceWebApi.Controllers
             this.urlHashCodeService = urlHashCodeService;
             this.urlGeneratorService = urlGeneratorService;
             this.configuration = configuration;
+            this.BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value!;
         }
 
         [Authorize(Roles = RolesString.Admin)]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UrlModel>>> Get()
+        public async Task<ActionResult<IEnumerable<UrlToGet>>> Get()
         {
             
             var urls = await context.Urls.ToListAsync();
-            var urlsDto = new List<UrlModel>();
+            var urlsToGet = new List<UrlToGet>();
             foreach (var url in urls)
             {
-                var urlDto = new UrlModel()
+                var urlToGet = new UrlToGet()
                 {
+                    Id = url.Id,
                     OriginalUrl = url.OriginalUrl,
-                    ShortUrl = url.ShortUrl
+                    ShortUrl = $"{BaseUrl}ushorter/{url.ShortUrl}",
+                    CodeUrl = url.ShortUrl
                 };
-                urlsDto.Add(urlDto);
+                urlsToGet.Add(urlToGet);
             }
-            return Ok(urlsDto);
+            return Ok(urlsToGet);
              
         }
 
         [HttpGet("my")]
         [Authorize(Roles = RolesString.User)]
-        public async Task<ActionResult<IEnumerable<UrlModel>>> GetMyUrls()
+        public async Task<ActionResult<IEnumerable<UrlToGet>>> GetMyUrls()
         {
-            
-            var userId = User.FindFirst(ClaimTypes.Name)?.Value;
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return BadRequest();
             var urlsIds = await context.UserUrls
-                .Where(userUrl => userUrl.Equals(userId))
+                .Where(userUrl => userUrl.UserId.Equals(userId))
                 .Select(userUrl => userUrl.UrlId)
                 .ToListAsync();
 
@@ -62,18 +66,20 @@ namespace UrlShorterServiceWebApi.Controllers
                 .Where(url => urlsIds.Contains(url.Id))
                 .ToListAsync();
 
-            var urlsDto = new List<UrlModel>();
+            var urlsToGet = new List<UrlToGet>();
 
             foreach (var url in urls)
             {
-                var urlDto = new UrlModel()
+                var urlToGet = new UrlToGet()
                 {
+                    Id = url.Id,
                     OriginalUrl = url.OriginalUrl,
-                    ShortUrl = url.ShortUrl
+                    ShortUrl = $"{BaseUrl}ushorter/{url.ShortUrl}",
+                    CodeUrl = url.ShortUrl
                 };
-                urlsDto.Add(urlDto);
+                urlsToGet.Add(urlToGet);
             }
-            return Ok(urlsDto);
+            return Ok(urlsToGet);
              
         }
 
@@ -101,7 +107,6 @@ namespace UrlShorterServiceWebApi.Controllers
             {
                 var originalUrl = urlDto.Url;
                 if (string.IsNullOrEmpty(originalUrl)) return BadRequest();
-                var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
                 var url = new Url();
                 url.OriginalUrl = originalUrl;
                 url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
@@ -116,6 +121,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 return BadRequest();
             }
         }
+        
 
         [HttpPost("custom")]
         [Authorize(Roles = RolesString.User)]
@@ -124,11 +130,19 @@ namespace UrlShorterServiceWebApi.Controllers
             
             try
             {
-                if (string.IsNullOrEmpty(urlModel.OriginalUrl) || string.IsNullOrEmpty(urlModel.ShortUrl)) return BadRequest();
-                var BaseUrl = configuration.GetSection(SettingStrings.ServicesUrlsSection).GetSection(SettingStrings.UrlsApi).Value;
+                if (string.IsNullOrEmpty(urlModel.OriginalUrl)) return BadRequest();
+                
                 var url = new Url();
+                
+                if (string.IsNullOrEmpty(urlModel.ShortUrl))
+                {
+                    url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(urlModel.OriginalUrl));
+                }
+                else
+                {
+                    url.ShortUrl = urlModel.ShortUrl!;
+                }
                 url.OriginalUrl = urlModel.OriginalUrl;
-                url.ShortUrl = urlModel.ShortUrl;
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
@@ -153,7 +167,7 @@ namespace UrlShorterServiceWebApi.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = RolesString.User + "," + RolesString.Admin)]
-        public async Task<ActionResult> Update(int id, [FromBody] UrlModel urlModel)
+        public async Task<ActionResult> Update(int id, [FromBody] UrlDto urlModel)
         {
             try
             {
@@ -165,8 +179,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 {
                     var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
                     if (url == null) return NotFound();
-                    url.ShortUrl = urlModel.ShortUrl;
-                    url.OriginalUrl = urlModel.OriginalUrl;
+                    url.ShortUrl = urlModel.Url!;
                     context.Urls.Update(url);
                     await context.SaveChangesAsync();
                     return NoContent();
