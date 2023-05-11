@@ -110,6 +110,11 @@ namespace UrlShorterServiceWebApi.Controllers
                 var url = new Url();
                 url.OriginalUrl = originalUrl;
                 url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
+                do
+                {
+                    url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
+                } 
+                while (await context.Urls.FirstOrDefaultAsync(u => u.ShortUrl.Equals(url.ShortUrl)) != null);
                 url.CreationDate = DateTime.Now;
                 await context.AddAsync(url);
                 await context.SaveChangesAsync();
@@ -133,13 +138,18 @@ namespace UrlShorterServiceWebApi.Controllers
                 if (string.IsNullOrEmpty(urlModel.OriginalUrl)) return BadRequest();
                 
                 var url = new Url();
-                
+
                 if (string.IsNullOrEmpty(urlModel.ShortUrl))
                 {
-                    url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(urlModel.OriginalUrl));
+                    do
+                    {
+                        url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(urlModel.OriginalUrl));
+                    } 
+                    while (await context.Urls.FirstOrDefaultAsync(u => u.ShortUrl.Equals(urlModel.ShortUrl)) != null);
                 }
                 else
                 {
+                    if (await context.Urls.FirstOrDefaultAsync(u => u.ShortUrl.Equals(urlModel.ShortUrl)) != null) return BadRequest("Url code is already taken");
                     url.ShortUrl = urlModel.ShortUrl!;
                 }
                 url.OriginalUrl = urlModel.OriginalUrl;
@@ -177,6 +187,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 }
                 else
                 {
+                    if (await context.Urls.FirstOrDefaultAsync(u => u.ShortUrl.Equals(urlModel.Url)) != null) return BadRequest("Url code is already taken");
                     var url = await context.Urls.FirstOrDefaultAsync(url => url.Id == id);
                     if (url == null) return NotFound();
                     url.ShortUrl = urlModel.Url!;
