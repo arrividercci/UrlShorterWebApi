@@ -2,6 +2,6 @@
 {
     public interface IUrlGeneratorService
     {
-        public string GetUrlByCode(string mapString);
+        public Task<string> GetUrlByCodeAsync(string mapString);
     }
 }

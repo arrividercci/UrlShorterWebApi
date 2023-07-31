@@ -5,16 +5,19 @@ namespace UrlShorterServiceWebApi.Services
 {
     public class UrlGeneratorService : IUrlGeneratorService
     {
-        public string GetUrlByCode(string mapString)
+        public async Task<string> GetUrlByCodeAsync(string mapString)
         {
-            var size = mapString.Length;
-            var random = new Random();
-            var url = new StringBuilder();
-            for(int i = 0; i < 8; i++)
+            return await Task<string>.Run(() =>
             {
-                url.Append(mapString[random.Next(size)]);
-            }
-            return url.ToString();
+                var size = mapString.Length;
+                var random = new Random();
+                var url = new StringBuilder();
+                for (int i = 0; i < 8; i++)
+                {
+                    url.Append(mapString[random.Next(size)]);
+                }
+                return url.ToString();
+            });
         }
     }
 }

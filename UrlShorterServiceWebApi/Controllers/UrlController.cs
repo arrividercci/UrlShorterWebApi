@@ -109,10 +109,10 @@ namespace UrlShorterServiceWebApi.Controllers
                 if (string.IsNullOrEmpty(originalUrl)) return BadRequest();
                 var url = new Url();
                 url.OriginalUrl = originalUrl;
-                url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
+                url.ShortUrl = await urlGeneratorService.GetUrlByCodeAsync(await urlHashCodeService.GetUrlHashCodeAsync(url.OriginalUrl));
                 do
                 {
-                    url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(url.OriginalUrl));
+                    url.ShortUrl = await urlGeneratorService.GetUrlByCodeAsync(await urlHashCodeService.GetUrlHashCodeAsync(url.OriginalUrl));
                 } 
                 while (await context.Urls.FirstOrDefaultAsync(u => u.ShortUrl.Equals(url.ShortUrl)) != null);
                 url.CreationDate = DateTime.Now;
@@ -143,7 +143,7 @@ namespace UrlShorterServiceWebApi.Controllers
                 {
                     do
                     {
-                        url.ShortUrl = urlGeneratorService.GetUrlByCode(urlHashCodeService.GetUrlHashCode(urlModel.OriginalUrl));
+                        url.ShortUrl = await urlGeneratorService.GetUrlByCodeAsync(await urlHashCodeService.GetUrlHashCodeAsync(urlModel.OriginalUrl));
                     } 
                     while (await context.Urls.FirstOrDefaultAsync(u => u.ShortUrl.Equals(urlModel.ShortUrl)) != null);
                 }
